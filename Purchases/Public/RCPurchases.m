@@ -267,14 +267,6 @@ static BOOL _automaticAppleSearchAdsAttributionCollection = NO;
         if (_automaticAppleSearchAdsAttributionCollection) {
             NSString *latestNetworkIdAndAdvertisingIdSentToAppleSearchAds = [self latestNetworkIdAndAdvertisingIdentifierSentForNetwork:RCAttributionNetworkAppleSearchAds];
             if (latestNetworkIdAndAdvertisingIdSentToAppleSearchAds == nil) {
-                [attributionFetcher adClientAttributionDetailsWithCompletionBlock:^(NSDictionary<NSString *, NSObject *> *_Nullable attributionDetails, NSError *_Nullable error) {
-                    NSArray *values = [attributionDetails allValues];
-
-                    bool hasIadAttribution = values.count != 0 && [values[0][@"iad-attribution"] boolValue];
-                    if (hasIadAttribution) {
-                        [self postAttributionData:attributionDetails fromNetwork:RCAttributionNetworkAppleSearchAds forNetworkUserId:nil];
-                    }
-                }];
             }
         }
     }
@@ -317,11 +309,10 @@ static BOOL _automaticAppleSearchAdsAttributionCollection = NO;
         RCErrorLog(@"⚠️ The parameter networkUserId is REQUIRED for AppsFlyer. ⚠️");
     }
     NSString *networkKey = [NSString stringWithFormat:@"%ld",(long)network];
-    NSString *advertisingIdentifier = [self.attributionFetcher advertisingIdentifier];
     NSString *cacheKey = [self attributionDataUserDefaultCacheKeyForAppUserID:self.identityManager.currentAppUserID];
     NSDictionary *dictOfLatestNetworkIdsAndAdvertisingIdsSentToNetworks = [self.userDefaults objectForKey:cacheKey];
     NSString *latestSentToNetwork = dictOfLatestNetworkIdsAndAdvertisingIdsSentToNetworks[networkKey];
-    NSString *newValueForNetwork = [NSString stringWithFormat:@"%@_%@", advertisingIdentifier, networkUserId];
+    NSString *newValueForNetwork = [NSString stringWithFormat:@"%@", networkUserId];
     
     if ([latestSentToNetwork isEqualToString:newValueForNetwork]) {
         RCDebugLog(@"Attribution data is the same as latest. Skipping.");
@@ -330,7 +321,6 @@ static BOOL _automaticAppleSearchAdsAttributionCollection = NO;
         newDictToCache[networkKey] = newValueForNetwork;
 
         NSMutableDictionary *newData = [NSMutableDictionary dictionaryWithDictionary:data];
-        newData[@"rc_idfa"] = advertisingIdentifier;
         newData[@"rc_idfv"] = [self.attributionFetcher identifierForVendor];
         newData[@"rc_attribution_network_id"] = networkUserId;
         
